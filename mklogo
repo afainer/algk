@@ -1,0 +1,5 @@
+#!/bin/sh
+
+convert -background transparent -fill white -stroke black -strokewidth 2 \
+        -font Inconsolata-Bold -pointsize 72 -kerning 32 -size 144x144 \
+        -gravity center caption:AL\ GK -depth 8 logo.png
