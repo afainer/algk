@@ -1,0 +1,118 @@
+diff -ruN a/src/aclocal.m4 b/src/aclocal.m4
+--- a/src/aclocal.m4
++++ b/src/aclocal.m4
+@@ -252,7 +252,7 @@
+ SONAME=''
+ SONAME_LDFLAGS=''
+ case "${host_os}" in
+-        linux-androideabi)
++        linux-android*)
+                 thehost='android'
+                 THREAD_CFLAGS='-D_THREAD_SAFE'
+ #               THREAD_LIBS='-lpthread'
+diff -ruN a/src/bdwgc/dyn_load.c b/src/bdwgc/dyn_load.c
+--- a/src/bdwgc/dyn_load.c
++++ b/src/bdwgc/dyn_load.c
+@@ -109,7 +109,7 @@
+ #     undef EM_ALPHA
+ #   endif
+ #   include <link.h>
+-#   if !defined(GC_DONT_DEFINE_LINK_MAP)
++#   if !defined(GC_DONT_DEFINE_LINK_MAP) && !defined(AARCH64)
+       /* link_map and r_debug should be defined explicitly,             */
+       /* as only bionic/linker/linker.h defines them but the header     */
+       /* itself is a C++ one starting from Android 4.3.                 */
+diff -ruN a/src/bdwgc/include/gc.h b/src/bdwgc/include/gc.h
+--- a/src/bdwgc/include/gc.h
++++ b/src/bdwgc/include/gc.h
+@@ -1619,7 +1619,12 @@
+ #elif (defined(PLATFORM_ANDROID) || defined(__ANDROID__)) \
+       && !defined(GC_NOT_DLL)
+ # pragma weak __data_start
+-  extern int __data_start[], _end[];
++  extern int __data_start[];
++# if defined(__aarch64__)
++  extern char _end[];
++# else
++  extern int _end[];
++# endif
+ # pragma weak _etext
+ # pragma weak __dso_handle
+   extern int _etext[], __dso_handle[];
+diff -ruN a/src/bdwgc/include/private/gcconfig.h b/src/bdwgc/include/private/gcconfig.h
+--- a/src/bdwgc/include/private/gcconfig.h
++++ b/src/bdwgc/include/private/gcconfig.h
+@@ -2689,7 +2689,8 @@
+                              || defined(MIPS) || defined(AVR32) \
+                              || defined(OR1K))) \
+      || (defined(LINUX) && (defined(SPARC) || defined(M68K))) \
+-     || ((defined(RTEMS) || defined(PLATFORM_ANDROID)) && defined(I386))) \
++     || ((defined(RTEMS) || defined(PLATFORM_ANDROID)) && defined(I386)) \
++     || (defined(PLATFORM_ANDROID) && defined(AARCH64)))                \
+     && !defined(NO_GETCONTEXT)
+ # define NO_GETCONTEXT
+ #endif
+diff -ruN a/src/bdwgc/pthread_stop_world.c b/src/bdwgc/pthread_stop_world.c
+--- a/src/bdwgc/pthread_stop_world.c
++++ b/src/bdwgc/pthread_stop_world.c
+@@ -441,7 +441,7 @@
+   int GC_stopping_pid = 0;
+ #endif
+ 
+-#ifdef PLATFORM_ANDROID
++#if defined(PLATFORM_ANDROID) && !defined(AARCH64)
+   extern int tkill(pid_t tid, int sig); /* from sys/linux-unistd.h */
+ 
+   static int android_thread_kill(pid_t tid, int sig)
+@@ -457,7 +457,7 @@
+ 
+     return ret;
+   }
+-#endif /* PLATFORM_ANDROID */
++#endif /* PLATFORM_ANDROID && !AARCH64 */
+ 
+ /* We hold the allocation lock.  Suspend all threads that might */
+ /* still be running.  Return the number of suspend signals that */
+@@ -501,7 +501,7 @@
+                 p -> stop_info.stack_ptr = (ptr_t)stack.ss_sp - stack.ss_size;
+               }
+ #           else
+-#             ifndef PLATFORM_ANDROID
++#             if !defined(PLATFORM_ANDROID) || defined(AARCH64)
+                 result = pthread_kill(p -> id, GC_sig_suspend);
+ #             else
+                 result = android_thread_kill(p -> kernel_id, GC_sig_suspend);
+@@ -824,7 +824,7 @@
+             if (pthread_resume_np(p -> id) != 0)
+               ABORT("pthread_resume_np failed");
+ #         else
+-#           ifndef PLATFORM_ANDROID
++#           if !defined(PLATFORM_ANDROID) || defined(AARCH64)
+               result = pthread_kill(p -> id, GC_sig_thr_restart);
+ #           else
+               result = android_thread_kill(p -> kernel_id,
+diff -ruN a/src/util/android.cross_config.aarch64 b/src/util/android.cross_config.aarch64
+--- /dev/null
++++ b/src/util/android.cross_config.aarch64
+@@ -0,0 +1,21 @@
++CL_FIXNUM_TYPE='long int'
++CL_FIXNUM_BITS=64
++CL_FIXNUM_MAX=2305843009213693951L
++CL_FIXNUM_MIN=-2305843009213693952L
++CL_INT_BITS=32
++CL_LONG_BITS=64
++ECL_STACK_DIR=down
++ECL_BIGENDIAN=no
++ECL_NEWLINE=LF
++ECL_FILE_CNT=2
++ECL_STDINT_HEADER="#include <stdint.h>"
++ECL_UINT8_T=uint8_t
++ECL_UINT16_T=uint16_t
++ECL_UINT32_T=uint32_t
++ECL_UINT64_T=uint64_t
++ECL_INT8_T=int8_t
++ECL_INT16_T=int16_t
++ECL_INT32_T=int32_t
++ECL_INT64_T=int64_t
++ECL_LONG_LONG_BITS=64
++ECL_WORKING_ENVIRON=yes

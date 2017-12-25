@@ -1,0 +1,64 @@
+#+TITLE: Android Lisp Games Kit (ALGK)
+
+* Description
+  Android Lisp Games Kit helps write android games using Common Lisp
+  (ECL) and SDL2.  It consists of an android application, SDL2, ECL,
+  Swank and a Lisp init script.
+
+* Current issues
+  - <<dl-issue>>Can't make the android dynamic loader to load fasls
+    from any other directory than ~/data/app/org.algk-1/lib/arm64/~.  If
+    you experienced the same issue, you need root access on your
+    device to copy fasls to this directory.
+  - Fasls are not bundled with the ALGK apk, so you have to copy them
+    on your device after installing the apk.  Due to the above
+    mentioned issue you have to copy them each time you reinstall
+    ALGK.  Also you should copy the init script to a directory
+    accessible for the ALGK process.
+  - ALGK is tested for Arm64 architecture only.
+  - Correct handling of OnPause/OnResume/OnStop/OnRestart events is
+    not implemented.
+* Dependencies
+  Specified versions are versions for which I tested ALGK.
+  - Android SDK API 23 (Android 6.0 Marshmallow)
+  - Android NDK 14.0
+  - ECL 16.1.3
+  - Slime 2.19
+  - SDL2 2.0.5
+* Build
+  Create a file ~config.mk~ in ALGK directory and define the following
+  variables:
+
+  #+BEGIN_SRC makefile
+    ANDROID_SDK_PATH ?= /path/to/android-sdk
+    ANDROID_NDK_PATH ?= /path/to/android-ndk
+    ECL_SRC_PATH     ?= /path/to/ecl-sources
+    SLIME_PATH       ?= /path/to/slime
+    SDL2_SRC_PATH    ?= /path/to/SDL2-sources
+  #+END_SRC
+
+  Then type ~make~.  Alternatively, you can specify the variables in
+  the environment.
+
+  #+BEGIN_SRC shell-script
+    export ANDROID_SDK_PATH=/path/to/android-sdk
+    export ANDROID_NDK_PATH=/path/to/android-ndk
+    export ECL_SRC_PATH=/path/to/ecl-sources
+    export SLIME_PATH=/path/to/slime
+    export SDL2_SRC_PATH=/path/to/SDL2-sources
+    make
+  #+END_SRC
+* Install
+  Install ~bin/algk-debug.apk~ on your device.  Copy Swank fasls from
+  ~.slime/fasl/*.*/ecl-*.*.*-linux-x86_64/~ to ALGK lib directory on
+  your device ~/data/app/org.algk-1/lib/arm64/~.  Copy each contrib to
+  the same directory (See [[dl-issue]]).  Copy ~init.lisp~ to
+  ~<your-primary-storage>/Android/data/org.algk/files/etc/~.
+* Running
+  Ensure that your device is connected to your LAN.  Start ALGK
+  application on your device.  Run the following command in Emacs:
+  ~M-x slime-connect~ and specify the device IP.
+* Thanks
+  I want to thank ECL developers and especially Daniel Kochmański for
+  his [[https://gitlab.common-lisp.net/ecl/ecl-android/][ecl-android project]] with Swank support.  Also, [[https://common-lisp.net/project/ecl/index.html#orgheadline18][ECL blog post]] by
+  David O'Toole was very helpful and inspiring.

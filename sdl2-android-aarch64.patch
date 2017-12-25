@@ -1,0 +1,30 @@
+diff -ru a/Android.mk b/Android.mk
+--- a/Android.mk
++++ b/Android.mk
+@@ -47,23 +47,8 @@
+ 	$(wildcard $(LOCAL_PATH)/src/test/*.c))
+ 
+ LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES
+-LOCAL_LDLIBS := -ldl -lGLESv1_CM -lGLESv2 -llog -landroid
++LOCAL_LDLIBS := -ldl -lGLESv3 -llog -landroid
+ 
+-include $(BUILD_SHARED_LIBRARY)
+-
+-###########################
+-#
+-# SDL static library
+-#
+-###########################
+-
+-LOCAL_MODULE := SDL2_static
+-
+-LOCAL_MODULE_FILENAME := libSDL2
++LOCAL_ALLOW_UNDEFINED_SYMBOLS = true
+ 
+-LOCAL_SRC_FILES += $(subst $(LOCAL_PATH)/,,$(LOCAL_PATH)/src/main/android/SDL_android_main.c)
+-
+-LOCAL_LDLIBS := 
+-LOCAL_EXPORT_LDLIBS := -Wl,--undefined=Java_org_libsdl_app_SDLActivity_nativeInit -ldl -lGLESv1_CM -lGLESv2 -llog -landroid
+-
+-include $(BUILD_STATIC_LIBRARY)
++include $(BUILD_SHARED_LIBRARY)
