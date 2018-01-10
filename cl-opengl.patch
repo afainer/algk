@@ -1,0 +1,67 @@
+diff -ru a/gl/bindings.lisp b/gl/bindings.lisp
+--- a/gl/bindings.lisp
++++ b/gl/bindings.lisp
+@@ -51,7 +51,8 @@
+ (defun check-error (&optional context)
+   (declare (optimize speed))
+   (unless *in-begin*
+-    (let ((error-code (foreign-funcall ("glGetError" :library opengl)
++    (let ((error-code (foreign-funcall #-android ("glGetError" :library opengl)
++                                       #+android "glGetError"
+                                        :unsigned-int)))
+       (unless (zerop error-code)
+         (restart-case
+@@ -68,7 +69,8 @@
+      #-cl-opengl-no-check-error
+        (defun ,lname ,(mapcar #'first body)
+          (multiple-value-prog1
+-             (foreign-funcall (,cname :library opengl)
++             (foreign-funcall #-android (,cname :library opengl)
++                              #+android ,cname
+                               ,@(loop for i in body
+                                    collect (second i)
+                                    collect (first i))
+@@ -83,7 +85,7 @@
+               (t
+                `((check-error ',lname))))))
+      #+cl-opengl-no-check-error
+-     (defcfun (,cname ,lname :library opengl) ,result-type ,@body)))
++     (defcfun (,cname ,lname #-android ,@(:library opengl)) ,result-type ,@body)))
+ 
+ ;;;; Extensions
+ 
+@@ -153,7 +155,8 @@
+                  *gl-extension-resetter-list*))
+          (foreign-funcall-pointer
+           ,pointer
+-          (:library opengl)
++          #-android (:library opengl)
++          #+android nil
+           ,@(loop for arg in args collect (second arg) collect (first arg))
+           ,return-type)))))
+ 
+@@ -175,7 +178,8 @@
+                 (multiple-value-prog1
+                     (foreign-funcall-pointer
+                      ,address
+-                     (:library opengl)
++                     #-android (:library opengl)
++                     #+android nil
+                      ,@(loop for i in body
+                           collect (second i)
+                           collect (first i))
+diff -ru a/gl/library.lisp b/gl/library.lisp
+--- a/gl/library.lisp
++++ b/gl/library.lisp
+@@ -32,9 +32,11 @@
+ 
+ (in-package #:cl-opengl-bindings)
+ 
++#-android
+ (define-foreign-library opengl
+   (:darwin (:framework "OpenGL"))
+   (:windows "opengl32.dll" :convention :stdcall)
+   (:unix (:or "libGL.so.4" "libGL.so.3" "libGL.so.2" "libGL.so.1" "libGL.so")))
+ 
++#-android
+ (use-foreign-library opengl)

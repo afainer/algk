@@ -1,0 +1,13 @@
+bin
+.cache
+.slime
+config.mk
+fasls
+gen
+jni/SDL
+jni/src/include
+jni/src/libecl.so
+libs
+local.properties
+obj
+quicklisp
